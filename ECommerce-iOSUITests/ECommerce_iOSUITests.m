@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import <XCTest/XCTest.h>
-#import <KIF/KIFTestCase.h>
-#import <KIF/KIF.h>
+//#import <KIF/KIFTestCase.h>
+//#import <KIF/KIF.h>
 //#import "AcmeConfiguration.h"
 //#import "KIFUITestActor+EXAdditions.h"
 

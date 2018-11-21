@@ -6,6 +6,9 @@
 //  Copyright (c) 2013 Adam Leftik. All rights reserved.
 //
 
+
+#import <ADEUMInstrumentation/ADEumInstrumentation.h>
+
 #import "AppDelegate.h"
 
 #import "MasterViewController.h"
@@ -29,14 +32,80 @@
 
     NSString* const kUsername			= @"username";
     NSString* const kPassword			= @"password";
-    NSString* const kUrl                = @"url";
+    NSString* const kUrl                = @"url"; //url
     NSString* const kOffline            = @"offline";
     NSString* const kAppKey             = @"appKey";
     NSString* const kCollectorUrl       = @"collectorUrl";
     NSString* const kSQLLite            = @"AcmeBookstore.sqlite";
 
+
+
+- (BOOL)networkRequestCallback:(ADEumHTTPRequestTracker *)networkRequest
+{
+    
+    NSString *loginURL = @"appdynamicspilot/rest/user";
+    
+    [ADEumInstrumentation setUserData:@"username_ios" value:_username];
+    NSLog(@"***** APPDYNAMICS USER ID  SET ****** %@",_username);
+    
+    NSLog(@"MG: Code Start ////////////////////////////////////");
+    
+    
+    BOOL returnBeacon;
+    BOOL resultStrings;
+    NSString *urlString = networkRequest.url.absoluteString;
+    
+    resultStrings = [urlString hasSuffix: loginURL];
+    
+    if (resultStrings) {
+        NSLog(@"MG:ORIGINAL URL is %@",urlString);
+        NSLog(@"MG:LOGIN REQUEST do not TRACK");
+        return NO;
+    }
+    
+    returnBeacon = true;
+    NSString *maskURL = @"http://appd.com/checkoutmasked";
+    if (!([urlString rangeOfString:@"rest/cart/co/"].location == NSNotFound)) {
+        networkRequest.url = [NSURL URLWithString:maskURL];
+        NSString *changedString = networkRequest.url.absoluteString;
+        NSLog(@"Check Out Transaction has been masked");
+        NSLog(@"ORIGINAL URL is %@",urlString);
+        NSLog(@"Modified URL is %@",changedString);
+    }
+    
+    
+    
+
+    
+    NSLog(@"******** END MY CODE  ******");
+    
+    return returnBeacon;
+    
+    
+}
+
+- (void) onUserLoggedIn:(NSString *)kUsername {
+    [ADEumInstrumentation setUserData:@"User ID" value:kUsername];
+      NSLog(@"***** USER ID ****** %@",kUsername);
+ }
+
+
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    
+//Lab Code MG
+//Working before customizing code
+//[ADEumInstrumentation initWithKey:@"AD-AAB-AAH-RYY"]; //for example, AAA-AAB-AUM
+    
+    
+    //ADEumAgentConfiguration *config = [[ADEumAgentConfiguration alloc] initWithAppKey:@"AD-AAB-AAH-RYY"];
+    ADEumAgentConfiguration *config = [[ADEumAgentConfiguration alloc] initWithAppKey:@"AD-AAB-AAH-RYY"];
+    config.networkRequestCallback = self;
+    //config.loggingLevel = ADEumLoggingLevelAll;
+    [ADEumInstrumentation initWithConfiguration:config];
+
+    
     NSSetUncaughtExceptionHandler(&HandleExceptions);
     
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -83,6 +152,11 @@
 
 
 -(void) setupReachabilityNotification {
+    //InfoPoint
+    id tracker = [ADEumInstrumentation beginCall:self selector:_cmd];
+    
+    
+    
     NSURL *url = [[NSURL alloc] initWithString:_url];
     Reachability* reach = [Reachability reachabilityWithHostname:url.host];
     
@@ -92,6 +166,10 @@
                                                object:nil];
     
     [reach startNotifier];
+    
+    //InfoPoint
+    [ADEumInstrumentation endCall:tracker];
+    NSLog(@"MG: InfoPointSet: setupReachabilityNotification");
 }
 
 
@@ -116,6 +194,7 @@
 }
 
 -(BOOL) pingSite {
+    
     NSMutableString *cartUrl = [_url stringByAppendingString:@"rest/ping"];
     NSURL *url = [NSURL URLWithString:cartUrl];
     NSLog(@"URL is :%@ ", cartUrl);
@@ -136,6 +215,11 @@
 }
 
 -(void) loadShoppingCartFromDisk {
+    
+    //MG setup info point:
+    id tracker = [ADEumInstrumentation beginCall:self selector:_cmd];
+    
+
 
     NSManagedObjectContext *moc = [self managedObjectContext];
     NSEntityDescription *entityDescription = [NSEntityDescription
@@ -155,6 +239,11 @@
         NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
         abort();
     }
+
+    
+    //MG End of Info Point
+        [ADEumInstrumentation endCall:tracker];
+    NSLog(@"MG: End InfoPoint:loadShoppoingFromDisk");
     
 }
 
@@ -166,12 +255,16 @@
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
+    NSLog(@"MG: startTimerWithMachine: Enter Background");
+    [ADEumInstrumentation startTimerWithName:@"Time in Background"];
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
+    NSLog(@"MG: stopTimerWithName - Application Enter Forground");
+    [ADEumInstrumentation stopTimerWithName:@"Time in Background"];
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }
 
@@ -331,6 +424,10 @@
         _appKey = [standardDefaults objectForKey:kAppKey];
         _collectorUrl = [standardDefaults objectForKey:kCollectorUrl];
         NSLog(@"username is when changed %@", _username);
+        
+        //[ADEumInstrumentation setUserData:@"usernam9" value:_username];
+        //NSLog(@"+++++++++++ USER ID WHEN CHANGED ++++++++++++++++++ %@",_username);
+        
     }
 
 
@@ -375,7 +472,9 @@
             [appDefaults setObject:prefItemDefaultValue forKey:prefItemKey];
         }
     }
-     NSLog(@"username is %@", _username);
+    // NSLog(@"username is %@", _username);
+    //[ADEumInstrumentation setUserData:@"User ID" value:_username];
+    //NSLog(@"******** ADDED APPD Info 0 ****** %@",_username);
 }
 
 
@@ -388,7 +487,9 @@ void HandleExceptions(NSException *exception) {
 -(void) relogin {
     NSLog(@"******** LOGGING IN ******");
     self.session = [[ShoppingCartSession alloc] initWithURLString:_url];
-    NSLog(@"******** NEW'Ed a SESSION  ******");    
+    NSLog(@"******** NEW'Ed a SESSION  ******");
+    
+    
 }
 
 

@@ -24,7 +24,7 @@
 
 - (void)parserDidEndDocument:(NSXMLParser *)parserShop {
     NSLog(@"Doc Parsed");
-    NSLog(@"Count of items %d", [self.cartItems count] );
+    NSLog(@"Count of items %lu", [self.cartItems count] );
 }
 
 - (void)parser:(NSXMLParser *)parserShop didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qualifiedName attributes:(NSDictionary *)attributeDict {

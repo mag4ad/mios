@@ -55,6 +55,7 @@ BookListParser *parser;
 }
 
 -(void) refreshTable {
+    
     activityIndicator.hidden = FALSE;
     [activityIndicator startAnimating];
     AppDelegate *appDelegate = (AppDelegate *) [[UIApplication sharedApplication] delegate];

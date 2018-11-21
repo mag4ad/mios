@@ -6,6 +6,9 @@
 //  Copyright (c) 2013 Adam Leftik. All rights reserved.
 //
 
+//MG Added to use custom info points
+#import <ADEUMInstrumentation/ADEumInstrumentation.h>
+
 #import "CartViewController.h"
 #import "AppDelegate.h"
 #import "CheckoutRequest.h"
@@ -36,7 +39,7 @@
     // Do any additional setup after loading the view, typically from a nib.
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
     
-    self.checkoutButton = [[UIBarButtonItem alloc] initWithTitle:@"Checkout" style:UIBarButtonSystemItemAdd target:self action:@selector(checkout:)];
+    self.checkoutButton = [[UIBarButtonItem alloc] initWithTitle:@"Checkout MG" style:UIBarButtonSystemItemAdd target:self action:@selector(checkout:)];
     self.navigationItem.rightBarButtonItem = self.checkoutButton;
     [self.navigationItem.rightBarButtonItem setAccessibilityLabel:@"CheckoutButton"];
 }
@@ -65,12 +68,23 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
+    
     return [[self.fetchedResultsController sections] count];
+    
+    
+    
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
+    
+    //MG Return number of books in Cart
+    
+    long int numberOfBooks = [sectionInfo numberOfObjects];
+    NSLog(@"MG: numberofbooks %li",numberOfBooks);
+    [ADEumInstrumentation reportMetricWithName:@"NumberOfItemsInCart" value:numberOfBooks];
+    
     return [sectionInfo numberOfObjects];
 }
 
